@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "MOSIP FormFalcon 🦅",
+  "version": "3.2",
+  "description": "Side-Panel OCR Assistant for MOSIP",
+  "permissions": ["activeTab", "scripting", "sidePanel", "storage"],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "action": {
+    "default_title": "Open MOSIP Assistant"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "side_panel": {
+    "default_path": "popup.html"
+  }
+}
