@@ -2,95 +2,97 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoForm-AI</title>
     <style>
-        * { box-sizing: border-box; }
-        body { width: 100%; margin: 0; padding: 20px; font-family: 'Segoe UI', sans-serif; background-color: #f3f4f6; color: #1f2937; }
-        h3 { text-align: center; color: #111827; margin-bottom: 20px; font-size: 1.25rem; }
-        
-        .card { background: white; border-radius: 12px; padding: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 16px; }
-        
-        /* Drop Zone */
-        .upload-area { border: 2px dashed #cbd5e1; border-radius: 8px; padding: 20px; text-align: center; background-color: #f8fafc; transition: all 0.2s; cursor: pointer; position: relative; }
-        .upload-area:hover { border-color: #3b82f6; background-color: #eff6ff; }
-        input[type="file"] { position: absolute; width: 100%; height: 100%; top: 0; left: 0; opacity: 0; cursor: pointer; }
-        .upload-icon { font-size: 24px; display: block; margin-bottom: 8px; }
-        .upload-text { font-size: 0.9rem; color: #64748b; font-weight: 500; }
-        
-        select { width: 100%; padding: 10px; border: 1px solid #e5e7eb; border-radius: 8px; background-color: white; margin-bottom: 15px; }
-        label { font-size: 0.85rem; font-weight: 600; color: #4b5563; margin-bottom: 4px; display: block; }
-        
-        /* --- BUTTON STYLES (THE FLICKER FIX) --- */
-        button { 
-            width: 100%; padding: 12px; border: none; border-radius: 8px; 
-            font-weight: 600; cursor: pointer; color: white; 
-            transition: all 0.1s ease-in-out; /* Fast transition for click effect */
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            padding: 15px;
+            background-color: #fcfcfc;
         }
-        
-        /* The "Flicker" Effect: Shrinks and darkens when clicked */
-        button:active { 
-            transform: scale(0.95); 
-            filter: brightness(0.85);
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+        h2 {
+            text-align: center;
+            color: #333;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+            font-size: 18px;
         }
-
-        #extractBtn { background: #2563eb; }
-        #insertBtn { background: #059669; }
-        #verifyBtn { background: #e67e22; margin-top: 10px; }
-        
-        /* --- LIST & DELETE ICON --- */
-        #candidateSection { max-height: 500px; overflow-y: auto; }
-        
-        .candidate-row { 
-            display: flex; align-items: center; background: white; 
-            padding: 8px; margin-bottom: 8px; border-radius: 8px; 
-            border: 1px solid #e5e7eb; transition: 0.2s;
+        /* The Nice Upload Window */
+        .upload-box {
+            border: 2px dashed #bbb;
+            border-radius: 8px;
+            padding: 25px;
+            text-align: center;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 15px;
         }
-        .candidate-row:hover { background-color: #f9fafb; }
-
-        .candidate-text { flex-grow: 1; border: none; background: transparent; outline: none; margin-left: 8px; font-size: 0.9rem; }
-        .candidate-tag { font-size: 0.7rem; font-weight: 700; padding: 4px; border-radius: 4px; color: white; margin-right: 8px; }
-        
-        /* The Red Trash Can */
-        .delete-btn {
-            cursor: pointer; font-size: 16px; padding: 4px; border-radius: 4px; color: #e74c3c; opacity: 0.6; transition: 0.2s;
+        .upload-box:hover {
+            border-color: #007bff;
+            background-color: #f0f8ff;
         }
-        .delete-btn:hover { background-color: #ffe5e5; opacity: 1; transform: scale(1.1); }
+        .icon { font-size: 24px; margin-bottom: 5px; display: block; }
         
-        .hidden { display: none; }
-        #status { text-align: center; font-size: 0.85rem; color: #6b7280; margin-top: 15px; }
+        button {
+            width: 100%;
+            background-color: #007bff;
+            color: white;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 15px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        button:disabled { background-color: #ccc; }
+        
+        #results { margin-top: 20px; }
+        
+        /* Draggable Result Cards */
+        .result-card {
+            background: white;
+            border: 1px solid #eee;
+            border-left: 4px solid #007bff;
+            border-radius: 4px;
+            padding: 10px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            cursor: grab;
+        }
+        .result-card:active { cursor: grabbing; }
+        .label {
+            font-size: 11px;
+            font-weight: bold;
+            color: #666;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+        input[type="text"] {
+            width: 95%;
+            border: 1px solid #ddd;
+            padding: 6px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
-    <h3>🦅 FormFalcon</h3>
-    
-    <div class="card">
-        <label>Language Mode</label>
-        <select id="langSelect">
-            <option value="english">English (Handwriting)</option>
-            <option value="multilingual">Hindi / Printed Text</option>
-        </select>
 
-        <div class="upload-area">
-            <span class="upload-icon">📂</span>
-            <div class="upload-text">Click to Upload</div>
-            <div class="upload-subtext">or drag and drop file here</div>
-            <input type="file" id="fileInput" accept="image/*">
-        </div>
+    <h2>AutoForm-AI</h2>
 
-        <button id="extractBtn">⚡ Scan Document</button>
+    <div class="upload-box" id="dropArea">
+        <span class="icon">📂</span>
+        <span id="fileName">Click to Upload ID</span>
+        <input type="file" id="imageInput" accept="image/*" style="display: none;">
     </div>
 
-    <div id="candidateSection" class="hidden">
-        <div style="text-align:center; font-size:11px; color:#666; margin-bottom:5px;">💡 Drag text to ANY field on the page</div>
-        <div class="card" style="padding: 10px;">
-            <div id="listContainer"></div>
-            <button id="insertBtn">Insert Selected Data</button>
-            <button id="verifyBtn">Verify Form Data</button>
-        </div>
-    </div>
-    
-    <p id="status">Ready.</p>
+    <button id="scanBtn">Scan Document</button>
+    <p id="status" style="text-align: center; font-size: 13px; color: #666; margin-top: 10px;">Ready.</p>
+
+    <div id="results"></div>
+
     <script src="popup.js"></script>
 </body>
 </html>

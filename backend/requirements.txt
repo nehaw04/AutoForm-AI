@@ -1,11 +1,12 @@
 fastapi
 uvicorn
 python-multipart
+Pillow
+easyocr
 transformers
 torch
-pillow
-easyocr
-spacy
-thefuzz
+torchvision
 opencv-python-headless
 numpy
+spacy
+thefuzz
