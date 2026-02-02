@@ -385,12 +385,12 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 If this project helped you, please consider:
 
-[![Star on GitHub](https://img.shields.io/github/stars/YOUR_USERNAME/AutoForm-AI?style=social)](https://github.com/YOUR_USERNAME/AutoForm-AI)
-[![Fork on GitHub](https://img.shields.io/github/forks/YOUR_USERNAME/AutoForm-AI?style=social)](https://github.com/YOUR_USERNAME/AutoForm-AI/fork)
+[![Star on GitHub](https://img.shields.io/github/stars/nehaw04/AutoForm-AI?style=social)](https://github.com/nehaw04/AutoForm-AI)
+[![Fork on GitHub](https://img.shields.io/github/forks/nehaw04/AutoForm-AI?style=social)](https://github.com/nehaw04/AutoForm-AI/fork)
 
-**Built with 💙 by [Your Name](https://github.com/YOUR_USERNAME)**
+**Built with 💙 by [Neha R](https://github.com/nehaw04)**
 
-[Report Bug](https://github.com/YOUR_USERNAME/AutoForm-AI/issues) • [Request Feature](https://github.com/YOUR_USERNAME/AutoForm-AI/issues) • [Ask Question](https://github.com/YOUR_USERNAME/AutoForm-AI/discussions)
+[Report Bug](https://github.com/nehaw04/AutoForm-AI/issues) • [Request Feature](https://github.com/nehaw04/AutoForm-AI/issues) • [Ask Question](https://github.com/nehaw04/AutoForm-AI/discussions)
 
 ---
 
