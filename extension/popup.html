@@ -5,93 +5,63 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AutoForm-AI</title>
     <style>
-        body {
-            font-family: 'Segoe UI', sans-serif;
-            margin: 0;
-            padding: 15px;
-            background-color: #fcfcfc;
-        }
-        h2 {
-            text-align: center;
-            color: #333;
-            border-bottom: 2px solid #007bff;
-            padding-bottom: 10px;
-            font-size: 18px;
-        }
-        /* The Nice Upload Window */
-        .upload-box {
-            border: 2px dashed #bbb;
-            border-radius: 8px;
-            padding: 25px;
-            text-align: center;
-            background: white;
-            cursor: pointer;
-            transition: all 0.2s;
-            margin-bottom: 15px;
-        }
-        .upload-box:hover {
-            border-color: #007bff;
-            background-color: #f0f8ff;
-        }
-        .icon { font-size: 24px; margin-bottom: 5px; display: block; }
+        body { width: 340px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 15px; margin: 0; background-color: #f8fafc; color: #334155; }
+        h2 { text-align: center; color: #0f172a; border-bottom: 2px solid #3b82f6; padding-bottom: 10px; font-size: 18px; margin-top: 0; }
         
-        button {
-            width: 100%;
-            background-color: #007bff;
-            color: white;
-            padding: 12px;
-            border: none;
-            border-radius: 6px;
-            font-size: 15px;
-            cursor: pointer;
-            font-weight: 600;
-        }
-        button:disabled { background-color: #ccc; }
+        .btn-main { width: 100%; background-color: #3b82f6; color: white; padding: 12px; border: none; border-radius: 6px; font-size: 15px; cursor: pointer; font-weight: bold; margin-bottom: 15px; transition: background 0.2s; box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2); }
+        .btn-main:hover { background-color: #2563eb; }
+        .btn-main:disabled { background-color: #94a3b8; cursor: not-allowed; }
         
-        #results { margin-top: 20px; }
+        /* Tabs */
+        .tabs { display: flex; margin-bottom: 10px; border-bottom: 1px solid #cbd5e1; }
+        .tab { flex: 1; padding: 8px; text-align: center; cursor: pointer; font-weight: bold; font-size: 13px; color: #64748b; background: none; border: none; border-bottom: 2px solid transparent; }
+        .tab.active { color: #3b82f6; border-bottom: 2px solid #3b82f6; }
+
+        /* Lists */
+        .list-container { background: white; border: 1px solid #e2e8f0; border-radius: 6px; padding: 5px; max-height: 180px; overflow-y: auto; margin-bottom: 15px; }
+        .item-row { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #f1f5f9; font-size: 13px; gap: 8px; }
+        .item-row:last-child { border-bottom: none; }
+        .item-key { font-weight: 600; color: #64748b; text-transform: capitalize; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .item-val { color: #0f172a; font-weight: 500; text-align: right; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         
-        /* Draggable Result Cards */
-        .result-card {
-            background: white;
-            border: 1px solid #eee;
-            border-left: 4px solid #007bff;
-            border-radius: 4px;
-            padding: 10px;
-            margin-bottom: 10px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            cursor: grab;
-        }
-        .result-card:active { cursor: grabbing; }
-        .label {
-            font-size: 11px;
-            font-weight: bold;
-            color: #666;
-            text-transform: uppercase;
-            margin-bottom: 4px;
-        }
-        input[type="text"] {
-            width: 95%;
-            border: 1px solid #ddd;
-            padding: 6px;
-            border-radius: 4px;
-            font-size: 14px;
-        }
+        /* Actions */
+        .actions { display: flex; gap: 5px; }
+        .action-btn { background: none; border: none; cursor: pointer; font-size: 14px; opacity: 0.6; padding: 2px; transition: 0.2s; }
+        .action-btn:hover { opacity: 1; transform: scale(1.1); }
+        .empty-state { text-align: center; padding: 15px; color: #94a3b8; font-size: 12px; font-style: italic; }
+
+        /* Add Form */
+        .add-form { background: white; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+        input { padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 13px; outline: none; }
+        input:focus { border-color: #3b82f6; }
+        .btn-add { background: #10b981; color: white; border: none; padding: 8px; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .btn-add:hover { background: #059669; }
     </style>
 </head>
 <body>
 
     <h2>AutoForm-AI</h2>
 
-    <div class="upload-box" id="dropArea">
-        <span class="icon">📂</span>
-        <span id="fileName">Click to Upload ID</span>
-        <input type="file" id="imageInput" accept="image/*" style="display: none;">
+    <button id="autofill-btn" class="btn-main">✨ Auto-Fill Current Page</button>
+
+    <div class="tabs">
+        <button id="tab-vault-btn" class="tab active">My Vault</button>
+        <button id="tab-rules-btn" class="tab">Learned Rules</button>
     </div>
 
-    <button id="scanBtn">Scan Document</button>
-    <p id="status" style="text-align: center; font-size: 13px; color: #666; margin-top: 10px;">Ready.</p>
+    <div id="view-vault">
+        <div id="vault-list" class="list-container"></div>
+        
+        <div class="add-form">
+            <input type="text" id="new-key" placeholder="Label (e.g. registration number)">
+            <input type="text" id="new-val" placeholder="Value (e.g. 22MIM10089)">
+            <button id="add-btn" class="btn-add">➕ Save to Vault</button>
+        </div>
+    </div>
 
-    <div id="results"></div>
+    <div id="view-rules" style="display: none;">
+        <div id="rules-list" class="list-container" style="max-height: 250px;"></div>
+    </div>
 
     <script src="popup.js"></script>
 </body>

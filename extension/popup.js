@@ -1,128 +1,167 @@
-const scanButton = document.getElementById("scanBtn");
-const fileInput = document.getElementById("imageInput");
-const dropArea = document.getElementById("dropArea");
-const fileName = document.getElementById("fileName");
-const resultsDiv = document.getElementById("results");
-const statusText = document.getElementById("status");
+document.addEventListener("DOMContentLoaded", () => {
+    // UI Elements
+    const autofillBtn = document.getElementById("autofill-btn");
+    const vaultList = document.getElementById("vault-list");
+    const rulesList = document.getElementById("rules-list");
+    
+    // Tabs
+    const tabVaultBtn = document.getElementById("tab-vault-btn");
+    const tabRulesBtn = document.getElementById("tab-rules-btn");
+    const viewVault = document.getElementById("view-vault");
+    const viewRules = document.getElementById("view-rules");
 
-// --- DRAG & DROP LOGIC (NEW) ---
+    // Add Form
+    const addBtn = document.getElementById("add-btn");
+    const newKeyInput = document.getElementById("new-key");
+    const newValInput = document.getElementById("new-val");
 
-// 1. Prevent default behavior (browser opening the file)
-['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-    dropArea.addEventListener(eventName, preventDefaults, false);
-});
-
-function preventDefaults(e) {
-    e.preventDefault();
-    e.stopPropagation();
-}
-
-// 2. Highlight effect when dragging over
-['dragenter', 'dragover'].forEach(eventName => {
-    dropArea.addEventListener(eventName, highlight, false);
-});
-
-['dragleave', 'drop'].forEach(eventName => {
-    dropArea.addEventListener(eventName, unhighlight, false);
-});
-
-function highlight(e) {
-    dropArea.style.borderColor = "#007bff";
-    dropArea.style.backgroundColor = "#eef6fc";
-}
-
-function unhighlight(e) {
-    dropArea.style.borderColor = "#bbb";
-    dropArea.style.backgroundColor = "#fff";
-}
-
-// 3. Handle the Drop
-dropArea.addEventListener('drop', handleDrop, false);
-
-function handleDrop(e) {
-    const dt = e.dataTransfer;
-    const files = dt.files;
-
-    if (files.length > 0) {
-        // Assign dropped file to the hidden input
-        fileInput.files = files;
-        updateUI(files[0]);
-    }
-}
-
-// --- EXISTING LOGIC ---
-
-// Handle Click to Upload (Classic way)
-dropArea.addEventListener("click", () => fileInput.click());
-
-// Handle File Selection (Both Click & Drop end up here)
-fileInput.addEventListener("change", () => {
-    if (fileInput.files.length > 0) {
-        updateUI(fileInput.files[0]);
-    }
-});
-
-function updateUI(file) {
-    fileName.innerText = "📄 " + file.name;
-    // Keep the blue border to show success
-    dropArea.style.borderColor = "#007bff";
-    dropArea.style.backgroundColor = "#f0f8ff";
-}
-
-scanButton.addEventListener("click", async () => {
-    if (!fileInput.files[0]) {
-        statusText.innerText = "⚠️ Select a file first.";
-        return;
-    }
-
-    resultsDiv.innerHTML = ""; 
-    statusText.innerText = "⏳ Analyzing... (High Accuracy Mode)";
-    scanButton.disabled = true;
-
-    const formData = new FormData();
-    formData.append("file", fileInput.files[0]);
-    formData.append("language", "english");
-
-    try {
-        const response = await fetch("http://127.0.0.1:8000/extract", {
-            method: "POST",
-            body: formData
-        });
-
-        if (!response.ok) throw new Error("Server Error");
-
-        const data = await response.json();
-
-        if (data.results && data.results.length > 0) {
-            statusText.innerText = "✅ Done! Drag fields to form.";
-            data.results.forEach(item => {
-                createDraggableCard(item.tag, item.text);
-            });
-        } else {
-            statusText.innerText = "⚠️ No text found.";
-        }
-
-    } catch (error) {
-        console.error(error);
-        statusText.innerText = "❌ Error: Is Python running?";
-    } finally {
-        scanButton.disabled = false;
-        scanButton.innerText = "Scan Document";
-    }
-});
-
-function createDraggableCard(label, value) {
-    const card = document.createElement("div");
-    card.className = "result-card";
-    card.draggable = true;
-
-    card.addEventListener("dragstart", (e) => {
-        e.dataTransfer.setData("text/plain", value);
+    // --- TAB SWITCHING ---
+    tabVaultBtn.addEventListener("click", () => {
+        tabVaultBtn.classList.add("active");
+        tabRulesBtn.classList.remove("active");
+        viewVault.style.display = "block";
+        viewRules.style.display = "none";
+        loadData();
     });
 
-    card.innerHTML = `
-        <div class="label">${label}</div>
-        <input type="text" value="${value}">
-    `;
-    resultsDiv.appendChild(card);
-}
+    tabRulesBtn.addEventListener("click", () => {
+        tabRulesBtn.classList.add("active");
+        tabVaultBtn.classList.remove("active");
+        viewRules.style.display = "block";
+        viewVault.style.display = "none";
+        loadData();
+    });
+
+    // --- DATA LOADING & RENDERING ---
+    function loadData() {
+        chrome.storage.local.get(["vaultData", "learnedMappings"], (result) => {
+            renderVault(result.vaultData || {});
+            renderRules(result.learnedMappings || {});
+        });
+    }
+
+    function renderVault(vault) {
+        vaultList.innerHTML = "";
+        if (Object.keys(vault).length === 0) {
+            vaultList.innerHTML = `<div class="empty-state">Vault is empty.<br>Add data below.</div>`;
+            return;
+        }
+
+        for (const [key, value] of Object.entries(vault)) {
+            let displayKey = key.replace(/_/g, " "); 
+            
+            let div = document.createElement("div");
+            div.className = "item-row";
+            div.innerHTML = `
+                <span class="item-key" title="${displayKey}">${displayKey}</span> 
+                <span class="item-val" title="${value}">${value}</span>
+                <div class="actions">
+                    <button class="action-btn edit-vault" data-key="${key}">✏️</button>
+                    <button class="action-btn del-vault" data-key="${key}">🗑️</button>
+                </div>
+            `;
+            vaultList.appendChild(div);
+        }
+    }
+
+    function renderRules(rules) {
+        rulesList.innerHTML = "";
+        if (Object.keys(rules).length === 0) {
+            rulesList.innerHTML = `<div class="empty-state">No rules learned yet.<br>Type in web forms to teach the AI.</div>`;
+            return;
+        }
+
+        for (const [label, mappedKey] of Object.entries(rules)) {
+            let div = document.createElement("div");
+            div.className = "item-row";
+            div.innerHTML = `
+                <span class="item-key" title="${label}">${label}</span> 
+                <span>➔</span>
+                <span class="item-val" title="${mappedKey}">${mappedKey}</span>
+                <div class="actions">
+                    <button class="action-btn del-rule" data-label="${label}">🗑️</button>
+                </div>
+            `;
+            rulesList.appendChild(div);
+        }
+    }
+
+    // --- EVENT DELEGATION FOR EDIT/DELETE BUTTONS ---
+    document.addEventListener("click", (e) => {
+        // Delete Vault Item
+        if (e.target.classList.contains("del-vault")) {
+            const key = e.target.getAttribute("data-key");
+            chrome.storage.local.get(["vaultData"], (res) => {
+                let vault = res.vaultData || {};
+                delete vault[key];
+                chrome.storage.local.set({ vaultData: vault }, loadData);
+            });
+        }
+
+        // Edit Vault Item
+        if (e.target.classList.contains("edit-vault")) {
+            const key = e.target.getAttribute("data-key");
+            chrome.storage.local.get(["vaultData"], (res) => {
+                let vault = res.vaultData || {};
+                let newVal = prompt(`Edit value for "${key}":`, vault[key]);
+                if (newVal !== null && newVal.trim() !== "") {
+                    vault[key] = newVal.trim();
+                    chrome.storage.local.set({ vaultData: vault }, loadData);
+                }
+            });
+        }
+
+        // Delete Learned Rule
+        if (e.target.classList.contains("del-rule")) {
+            const label = e.target.getAttribute("data-label");
+            chrome.storage.local.get(["learnedMappings"], (res) => {
+                let mappings = res.learnedMappings || {};
+                delete mappings[label];
+                chrome.storage.local.set({ learnedMappings: mappings }, loadData);
+            });
+        }
+    });
+
+    // --- ADD MANUAL DATA ---
+    addBtn.addEventListener("click", () => {
+        let key = newKeyInput.value.trim().toLowerCase().replace(/\s+/g, "_");
+        let val = newValInput.value.trim();
+
+        if (!key || !val) return;
+
+        chrome.storage.local.get(["vaultData"], (result) => {
+            let vault = result.vaultData || {};
+            vault[key] = val;
+            chrome.storage.local.set({ vaultData: vault }, () => {
+                newKeyInput.value = "";
+                newValInput.value = "";
+                loadData();
+            });
+        });
+    });
+
+    // --- TRIGGER AUTO-FILL ---
+    autofillBtn.addEventListener("click", () => {
+        const originalText = autofillBtn.innerText;
+        autofillBtn.innerText = "⏳ Processing...";
+        autofillBtn.disabled = true;
+
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            if (!tabs[0]) return;
+            chrome.tabs.sendMessage(tabs[0].id, { action: "trigger_autofill" }, (response) => {
+                if (chrome.runtime.lastError) {
+                    autofillBtn.innerText = "⚠️ Refresh webpage first";
+                } else {
+                    autofillBtn.innerText = "✅ Fill Command Sent";
+                }
+                setTimeout(() => {
+                    autofillBtn.innerText = originalText;
+                    autofillBtn.disabled = false;
+                }, 2000);
+            });
+        });
+    });
+
+    // Initial Load
+    loadData();
+});

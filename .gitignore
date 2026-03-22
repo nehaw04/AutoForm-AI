@@ -5,3 +5,15 @@ venv/
 .vscode/
 *.jpg
 *.png
+
+# Python Virtual Environment
+backend/venv/
+backend/__pycache__/
+*.pyc
+
+# Extension local data
+extension/transformers.min.js
+
+# OS specific
+.DS_Store
+Thumbs.db
