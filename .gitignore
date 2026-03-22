@@ -1,10 +1,9 @@
+backend/.venv/
+venv/
 __pycache__/
 *.pyc
+.DS_Store
 .env
-venv/
-.vscode/
-*.jpg
-*.png
 
 # Python Virtual Environment
 backend/venv/
@@ -17,3 +16,4 @@ extension/transformers.min.js
 # OS specific
 .DS_Store
 Thumbs.db
+

@@ -39,6 +39,35 @@ document.addEventListener("DOMContentLoaded", () => {
             renderRules(result.learnedMappings || {});
         });
     }
+    async function uploadResume(file) {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+        const response = await fetch("http://localhost:8000/extract", {
+            method: "POST",
+            body: formData
+        });
+
+        const result = await response.json();
+        
+        if (result.status === "success") {
+            // Save the extracted data into the Vault
+            chrome.storage.local.get("vaultData", (data) => {
+                let currentVault = data.vaultData || {};
+                // Merge new data
+                let updatedVault = { ...currentVault, ...result.data };
+                chrome.storage.local.set({ vaultData: updatedVault }, () => {
+                    alert("Resume Synced to Vault!");
+                    location.reload(); // Refresh UI
+                });
+            });
+        }
+    } catch (error) {
+        console.error("Connection to backend failed:", error);
+        alert("Make sure your Python backend is running!");
+    }
+}
 
     function renderVault(vault) {
         vaultList.innerHTML = "";
@@ -46,7 +75,7 @@ document.addEventListener("DOMContentLoaded", () => {
             vaultList.innerHTML = `<div class="empty-state">Vault is empty.<br>Add data below.</div>`;
             return;
         }
-
+        
         for (const [key, value] of Object.entries(vault)) {
             let displayKey = key.replace(/_/g, " "); 
             
@@ -63,6 +92,7 @@ document.addEventListener("DOMContentLoaded", () => {
             vaultList.appendChild(div);
         }
     }
+    
 
     function renderRules(rules) {
         rulesList.innerHTML = "";
@@ -121,6 +151,42 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         }
     });
+    document.getElementById('captureBtn').addEventListener('click', async () => {
+        // 1. Get the active tab
+        let [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+
+        // 2. Execute a script to "Read" the form
+        chrome.scripting.executeScript({
+            target: { tabId: tab.id },
+            func: () => {
+                const inputs = document.querySelectorAll('input, textarea, select');
+                let capturedData = {};
+
+                inputs.forEach(input => {
+                    // Only save if the user actually typed something
+                    if (input.value && input.name || input.id) {
+                        const key = input.name || input.id;
+                        capturedData[key] = input.value;
+                    }
+                });
+                return capturedData;
+            }
+        }, (injectionResults) => {
+            for (const frameResult of injectionResults) {
+                const newData = frameResult.result;
+                
+                // 3. Save the captured data into the Vault
+                chrome.storage.local.get("vaultData", (data) => {
+                    let currentVault = data.vaultData || {};
+                    let updatedVault = { ...currentVault, ...newData };
+                    
+                    chrome.storage.local.set({ vaultData: updatedVault }, () => {
+                        alert(`Saved ${Object.keys(newData).length} new items to Vault!`);
+                    });
+                });
+            }
+        });
+    });
 
     // --- ADD MANUAL DATA ---
     addBtn.addEventListener("click", () => {
@@ -161,6 +227,52 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         });
     });
+
+    // This is the "Link" between the HTML and the Logic
+document.getElementById('resumeUpload').addEventListener('change', async (event) => {
+    const file = event.target.files[0]; // Get the file the user picked
+    if (file) {
+        // Show a loading state (optional but nice)
+        console.log("Reading file:", file.name);
+        
+        // Call the function we wrote earlier
+        await uploadResume(file); 
+    }
+});
+
+// The actual logic that talks to your Python Backend
+async function uploadResume(file) {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+        // Ensure your Python backend (main.py) is running on port 8000!
+        const response = await fetch("http://localhost:8000/extract", {
+            method: "POST",
+            body: formData
+        });
+
+        const result = await response.json();
+        
+        if (result.status === "success") {
+            // Save the extracted data into Chrome's Local Storage (The Vault)
+            chrome.storage.local.get("vaultData", (data) => {
+                let currentVault = data.vaultData || {};
+                
+                // Merge new data from Resume into your current Vault
+                let updatedVault = { ...currentVault, ...result.data };
+                
+                chrome.storage.local.set({ vaultData: updatedVault }, () => {
+                    alert("✅ Success! Resume data synced to Vault.");
+                    window.location.reload(); // Refresh the popup to show new data
+                });
+            });
+        }
+    } catch (error) {
+        console.error("Connection failed:", error);
+        alert("❌ Error: Is your Python Backend running?");
+    }
+}
 
     // Initial Load
     loadData();

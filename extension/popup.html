@@ -41,12 +41,17 @@
 <body>
 
     <h2>AutoForm-AI</h2>
-
+    <button id="captureBtn" style="background-color: #28a745; color: white; margin-top: 10px;">
+    📸 Capture This Form </button>
     <button id="autofill-btn" class="btn-main">✨ Auto-Fill Current Page</button>
 
     <div class="tabs">
         <button id="tab-vault-btn" class="tab active">My Vault</button>
         <button id="tab-rules-btn" class="tab">Learned Rules</button>
+    </div>
+    <div class="upload-section" style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #ddd;">
+    <p style="font-size: 12px; color: #666;">Sync Resume (PDF)</p>
+    <input type="file" id="resumeUpload" accept=".pdf" style="font-size: 11px;">
     </div>
 
     <div id="view-vault">
