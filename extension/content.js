@@ -3,15 +3,15 @@ console.log("🚨 AUTOFORM-AI: CONTENT SCRIPT INJECTED!");
 // --- 1. THE SCRAPER UTILITY ---
 // Finds the true label for any input box
 // --- 1. THE SUPER SCRAPER (Google Forms + Job Portals) ---
+// --- 1. THE SCRAPER UTILITY ---
 function getLabelForInput(element) {
-    // 1. Check standard attributes
+    // 1. Check standard attributes (aria-label, placeholder)
     let label = element.getAttribute("aria-label") || element.placeholder || "";
     
     // 2. Google Forms Special: Check aria-labelledby
     if (!label) {
         let labelledBy = element.getAttribute("aria-labelledby");
         if (labelledBy) {
-            // Google often uses multiple IDs; we take the first one
             let labelElem = document.getElementById(labelledBy.split(' ')[0]);
             if (labelElem) label = labelElem.innerText;
         }
@@ -23,21 +23,35 @@ function getLabelForInput(element) {
         if (labelElem) label = labelElem.innerText;
     }
     
-    // 4. Container Crawl: Look for the closest question container
+    // --- UPDATED STEP 4: SMART CONTAINER CRAWL ---
     if (!label) {
-        // Google Forms wrap questions in divs with specific classes/roles
+        // Look for the closest container that likely holds a question title
         let container = element.closest('[role="listitem"]') || 
                         element.closest('[data-params]') || 
+                        element.closest('div.flex') || // Added for modern layouts like Unstop
                         element.parentElement;
         
         if (container) {
-            // Find the first span or div that looks like a title
-            let titleElem = container.querySelector('div[role="heading"], span');
-            if (titleElem) label = titleElem.innerText;
+            // Priority 1: Look for explicit labels or headings
+            // Priority 2: If no heading, take the FIRST piece of text found in the container
+            let titleElem = container.querySelector('div[role="heading"], span, label, p');
+            
+            if (titleElem && titleElem.innerText.trim().length > 0) {
+                label = titleElem.innerText;
+            } else {
+                // Fallback: Just grab the text of the container itself, but stop at the first newline
+                label = container.innerText.split('\n')[0];
+            }
         }
     }
     
-    // Clean up: Remove the "*" Google adds for required fields
+    // FINAL SAFETY: If the label is just a random number/ID (like your screenshot), 
+    // and we found nothing better, return empty so the AI can try to guess later.
+    if (label && (label.length > 20 || /\d/.test(label) && label.includes('-'))) {
+        // This looks like a UUID or a messy ID, ignore it.
+        label = ""; 
+    }
+
     return label ? label.replace(/\*/g, '').trim().toLowerCase() : "";
 }
 
